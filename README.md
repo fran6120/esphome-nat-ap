@@ -59,8 +59,8 @@ esphome:
   friendly_name: esp32-c3-nat
 
 esp32:
-  board: esp32-c3-devkitm-1 # Ajusta a tu placa específica
-  cpu_frequency: 160MHZ # Ajusta a la frecuencia de tu CPU
+  board: esp32-c3-devkitm-1
+  cpu_frequency: 160MHZ
   framework:
     type: esp-idf
 

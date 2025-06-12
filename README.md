@@ -57,35 +57,13 @@ external_components:
 esphome:
   name: esp32-c3-nat
   friendly_name: esp32-c3-nat
-  platformio_options:
-    build_flags:
-      - "-DIP_NAPT=1"
-      - "-DIP_NAPT_PORTMAP=1"
-      - "-DLWIP_IPV4_NAPT=1"
 
 esp32:
   board: esp32-c3-devkitm-1 # Ajusta a tu placa específica
   cpu_frequency: 160MHZ # Ajusta a la frecuencia de tu CPU
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_COMPILER_OPTIMIZATION_SIZE: y
-      CONFIG_LWIP_IP_FORWARD: y
-      CONFIG_LWIP_IPV4_NAPT: y
-      CONFIG_LWIP_IPV4_NAPT_PORTMAP: y
-      CONFIG_LWIP_DHCP_OPTIONS: y
-      CONFIG_LWIP_DHCPS: y
-      CONFIG_LWIP_DHCP_DOES_ACD_CHECK: y
-      CONFIG_LWIP_DHCPS_STATIC_ENTRIES: y
-      CONFIG_LWIP_DHCPS_ADD_DNS: y
-      CONFIG_LWIP_DHCP_DISABLE_VENDOR_CLASS_ID: y
-      CONFIG_ESP_WIFI_SOFTAP_SUPPORT: y
-      CONFIG_LWIP_L2_TO_L3_COPY: y
-      CONFIG_LWIP_MEMP_NUM_NETCONN: "12"
-      CONFIG_LWIP_MEMP_NUM_TCP_PCB: "12"
-      CONFIG_LWIP_TCP_SND_BUF: "8192"
-      CONFIG_LWIP_TCP_WND: "8192"
- 
+
 logger:
   level: DEBUG 
 

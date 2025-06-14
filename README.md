@@ -92,7 +92,9 @@ config_esphome/
 
 ```yaml
 external_components:
-  - source: /config/components
+  - source:
+      type: git
+      url: https://github.com/fran6120/esphome-nat-ap
     components: nat_ap
     refresh: always
 

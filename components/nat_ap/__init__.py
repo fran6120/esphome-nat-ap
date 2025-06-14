@@ -1,4 +1,5 @@
 import esphome.codegen as cg
+from esphome.components.esp32 import add_idf_sdkconfig_option, const, get_esp32_variant
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
 

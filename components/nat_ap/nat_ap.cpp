@@ -1,9 +1,21 @@
 #include "nat_ap.h"
+#include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
-namespace esphome { // <-- La clase NatAp estará directamente aquí
+#include <string>
+
+#include "lwip/ip_addr.h"
+#include "lwip/lwip_napt.h"
+#include "lwip/tcpip.h"
+#include <esp_netif.h> 
+#include <esp_err.h> 
+
+namespace esphome {
+namespace nat_ap {
 
 // Inicialización de la variable estática fuera de la clase
-NatAp* NatAp::global_nat_ap_instance = nullptr; // Sigue siendo esphome::NatAp*
+NatAp* NatAp::global_nat_ap_instance = nullptr;
 
 NatAp::NatAp() // Constructor por defecto
     : ap_ssid_("ESPHomeAP"), ap_password_("ESPHomeAPPass"), ap_ip_address_("192.168.4.1"),
@@ -11,8 +23,6 @@ NatAp::NatAp() // Constructor por defecto
       esp_netif_ap(nullptr), esp_netif_sta(nullptr) {
     global_nat_ap_instance = this;
 }
-
-// ... (Resto de la implementación de los métodos de NatAp) ...
 
 void NatAp::add_port_forwarding_rule(PortForwardingProtocol protocol, uint16_t external_port,
                                      const std::string& internal_ip_str, uint16_t internal_port) {
@@ -98,11 +108,10 @@ void NatAp::loop() {
     // No hay tareas continuas activas aquí.
 }
 
-
 void NatAp::s_wifi_event_handler_ap_connected(void* arg, esp_event_base_t event_base,
                                               int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED) {
-        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data; // Es la misma estructura que stadisconnected para MAC y AID
+        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
         ESP_LOGI(TAG, "Cliente conectado al AP: MAC " MACSTR ", AID=%d",
                  MAC2STR(event->mac), event->aid);
     }
@@ -140,8 +149,13 @@ void NatAp::enable_napt() {
         ESP_LOGE(TAG, "No se pudo obtener la información de IP del AP. NAPT no se habilitará.");
         return;
     }
-
+    
+    LOCK_TCPIP_CORE();
+    
     ip_napt_enable(ap_ip_info.ip.addr, 1);
+
+    UNLOCK_TCPIP_CORE();
+    
     ESP_LOGI(TAG, "NAPT habilitado en la IP del AP: " IPSTR, IP2STR(&ap_ip_info.ip));
     
     napt_enabled_ = true;
@@ -163,6 +177,8 @@ void NatAp::apply_port_forwarding_rules() {
 
     ESP_LOGI(TAG, "Aplicando %u reglas de redirección de puertos con IP externa STA: " IPSTR,
              forwarding_rules_.size(), IP2STR(&sta_ip_info.ip));
+
+    LOCK_TCPIP_CORE();
 
     for (const auto& rule : forwarding_rules_) {
         uint8_t proto_lwip;
@@ -196,6 +212,7 @@ void NatAp::apply_port_forwarding_rules() {
                  IP2STR(&sta_ip_info.ip), rule.external_port,
                  ip4addr_ntoa(&rule.internal_ip), rule.internal_port);
     }
+    UNLOCK_TCPIP_CORE();
 }
 
 void NatAp::configure_ap_interface() {
@@ -203,7 +220,7 @@ void NatAp::configure_ap_interface() {
 
     esp_err_t err = esp_netif_dhcps_stop(esp_netif_ap);
     if (err != ESP_OK && err != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED) {
-         ESP_LOGW(TAG, "esp_netif_dhcps_stop() falló inesperadamente: %s", esp_err_to_name(err));
+        ESP_LOGW(TAG, "esp_netif_dhcps_stop() falló inesperadamente: %s", esp_err_to_name(err));
     }
 
     esp_netif_ip_info_t ip_info{};
@@ -232,8 +249,8 @@ void NatAp::configure_ap_interface() {
     if (esp_netif_sta && esp_netif_get_dns_info(esp_netif_sta, ESP_NETIF_DNS_MAIN, &dns_info) == ESP_OK) {
         uint32_t raw_dns_ip = dns_info.ip.u_addr.ip4.addr;
         ESP_LOGI(TAG, "DNS obtenido de STA: %u.%u.%u.%u",
-                        raw_dns_ip & 0xFF, (raw_dns_ip >> 8) & 0xFF,
-                        (raw_dns_ip >> 16) & 0xFF, (raw_dns_ip >> 24) & 0xFF);
+                      raw_dns_ip & 0xFF, (raw_dns_ip >> 8) & 0xFF,
+                      (raw_dns_ip >> 16) & 0xFF, (raw_dns_ip >> 24) & 0xFF);
 
         dhcps_offer_t dhcps_dns_value = OFFER_DNS;
         err = esp_netif_dhcps_option(esp_netif_ap,
@@ -249,8 +266,8 @@ void NatAp::configure_ap_interface() {
         if (err == ESP_OK) {
             uint32_t raw_dns_ip2 = dns_info.ip.u_addr.ip4.addr;
             ESP_LOGI(TAG, "DHCP del AP ofrecerá DNS: %u.%u.%u.%u",
-                            raw_dns_ip2 & 0xFF, (raw_dns_ip2 >> 8) & 0xFF,
-                            (raw_dns_ip2 >> 16) & 0xFF, (raw_dns_ip2 >> 24) & 0xFF);
+                          raw_dns_ip2 & 0xFF, (raw_dns_ip2 >> 8) & 0xFF,
+                          (raw_dns_ip2 >> 16) & 0xFF, (raw_dns_ip2 >> 24) & 0xFF);
         } else {
             ESP_LOGW(TAG, "esp_netif_set_dns_info() falló: %s", esp_err_to_name(err));
         }
@@ -259,4 +276,5 @@ void NatAp::configure_ap_interface() {
     }
 }
 
+} // namespace nat_ap
 } // namespace esphome

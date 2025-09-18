@@ -3,12 +3,13 @@ from esphome.components.esp32 import add_idf_sdkconfig_option, const, get_esp32_
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
 
-CODEOWNERS = ["@tu_usuario_github"]
+CODEOWNERS = ["@fran6120"]
 
 DEPENDENCIES = ["wifi"]
 
 # Definir el componente y el namespace C++
-nat_ap_ns = cg.esphome_ns # La clase NatAp está directamente en esphome::
+# La clase NatAp está dentro del namespace esphome::nat_ap
+nat_ap_ns = cg.esphome_ns.namespace("nat_ap")
 NatAp = nat_ap_ns.class_("NatAp", cg.Component)
 
 # --- Referencia explícita a la enumeración C++ ---
@@ -19,8 +20,8 @@ PortForwardingProtocolEnum = nat_ap_ns.enum("PortForwardingProtocol")
 # Esquema para una regla de redirección de puertos
 PORT_FORWARDING_PROTOCOL_SCHEMA = cv.enum(
     {
-        "TCP": PortForwardingProtocolEnum.PROTOCOL_TCP,    # Ahora usamos la referencia explícita
-        "UDP": PortForwardingProtocolEnum.PROTOCOL_UDP,    # que se traduce a "PortForwardingProtocol::PROTOCOL_TCP"
+        "TCP": PortForwardingProtocolEnum.PROTOCOL_TCP,
+        "UDP": PortForwardingProtocolEnum.PROTOCOL_UDP,
         "TCP_UDP": PortForwardingProtocolEnum.PROTOCOL_TCP_UDP,
     },
     upper=True,

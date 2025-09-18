@@ -14,7 +14,7 @@
 
 #include "lwip/lwip_napt.h"
 #include "lwip/err.h"
-#include "lwip/sockets.h" // Para IPPROTO_TCP, IPPROTO_UDP
+#include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include <lwip/netif.h>
 #include <lwip/dns.h>
@@ -25,7 +25,8 @@
 static const char *TAG = "NatAp";
 #define EXAMPLE_MAX_STA_CONN 4
 
-namespace esphome { // <-- La clase NatAp estará directamente aquí
+namespace esphome {
+namespace nat_ap {
 
 // Enumeración para el tipo de protocolo de redirección de puertos
 enum PortForwardingProtocol {
@@ -71,7 +72,7 @@ protected:
     esp_event_handler_instance_t instance_sta_disconnected;
     esp_event_handler_instance_t instance_got_ip;
 
-    static NatAp* global_nat_ap_instance; // Sigue siendo esphome::NatAp*
+    static NatAp* global_nat_ap_instance;
 
     std::vector<PortForwardingRule> forwarding_rules_;
     bool napt_enabled_ = false;
@@ -91,6 +92,7 @@ protected:
 
 };
 
+} // namespace nat_ap
 } // namespace esphome
 
 #endif // NAT_AP_H

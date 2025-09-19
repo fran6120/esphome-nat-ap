@@ -1,54 +1,12 @@
-# 📡 ESP32-C3 NAT AP para ESPHome
+# 📡 ESP32 NAT AP ESPHome component
 
-Este proyecto transforma un dispositivo **ESP32-C3** en un **punto de acceso Wi-Fi (AP)** con capacidad de **Traducción de Direcciones de Red (NAT)**, actuando como un **mini-router** configurable directamente desde **ESPHome**. Implementado como un **componente externo**, permite una integración limpia y declarativa en tus configuraciones YAML.
-
----
-
-## 📝 Descripción General
-
-Este **componente externo personalizado** para ESPHome permite que tu ESP32-C3 cree su propia red Wi-Fi local (AP), mientras se conecta a una red Wi-Fi existente (modo Estación o STA). Los dispositivos conectados al AP del ESP32 pueden acceder a internet a través de la conexión STA del ESP32, gracias a la implementación de NAT (Network Address Translation). Además, ofrece la posibilidad de configurar redirecciones de puertos (Port Forwarding) para exponer servicios internos al exterior.
-
----
-
-## ✨ Funcionalidades Clave
-
-* **Punto de Acceso Wi-Fi (AP) Configurable**: Define el SSID, la contraseña y la visibilidad (oculto/visible) de tu red Wi-Fi creada por el ESP32.
-
-* **Modo Estación (STA) Gestionado por ESPHome**: El ESP32 se conecta a tu red Wi-Fi principal como un cliente estándar, con la configuración de Wi-Fi gestionada por ESPHome.
-
-* **Traducción de Direcciones de Red (NAT)**: Los dispositivos en la red del AP pueden acceder a internet a través de la conexión STA del ESP32.
-
-* **Redirección de Puertos (Port Forwarding)**: Configura reglas para redirigir el tráfico entrante desde tu red principal a dispositivos específicos en la red interna del AP.
-
-* **IP Interna del AP Personalizable**: Define la dirección IP de la red Wi-Fi generada por el ESP32 (ej., `192.168.10.1`) directamente desde tu configuración YAML.
-
-* **Basado en ESP-IDF 5.1.6**: Utiliza las últimas APIs y funcionalidades de ESP-IDF para una implementación robusta y moderna.
-
----
-
-## 🙏 Agradecimientos y Créditos
-
-Este proyecto se ha desarrollado partiendo del concepto y la base del componente [mag1024/esphome-nat-ap](https://github.com/mag1024/esphome-nat-ap). La implementación del núcleo de NAT y la adopción de las APIs modernas de ESP-IDF se han inspirado y adaptado crucialmente del proyecto [martin-ger/esp32_nat_router](https://github.com/martin-ger/esp32_nat_router).
-
-La redacción de este `README.md` y la asistencia en la adaptación y depuración del código ha sido posible gracias a la ayuda de **Gemini**.
-
----
-
-## 🚀 Configuración Mínima de ESPHome
-
-yaml más abajo, al final de la descripción en inglés.
-
----
-
-# 📡 ESP32-C3 NAT AP for ESPHome
-
-This project transforms an ESP32-C3 device into a Wi-Fi access point (AP) capable of Network Address Translation (NAT), acting as a mini-router that can be configured directly from ESPHome. Implemented as an external component, it allows for clean, declarative integration into your YAML configurations.
+This project transforms an ESP32 device into a Wi-Fi access point (AP) capable of Network Address Translation (NAT), acting as a mini-router that can be configured directly from ESPHome. Implemented as an external component, it allows for clean, declarative integration into your YAML configurations.
 
 ---
 
 ## 📝 Overview
 
-This custom external component for ESPHome allows your ESP32-C3 to create its own local Wi-Fi network (AP) while connecting to an existing Wi-Fi network (Station or STA mode). Devices connected to the ESP32 AP can access the internet through the ESP32 STA connection, thanks to the implementation of NAT (Network Address Translation). It also offers the ability to configure port forwarding to expose internal services to the outside world.
+This custom external component for ESPHome allows your ESP32 to create its own local Wi-Fi network (AP) while connecting to an existing Wi-Fi network (Station or STA mode). Devices connected to the ESP32 AP can access the internet through the ESP32 STA connection, thanks to the implementation of NAT (Network Address Translation). It also offers the ability to configure port forwarding to expose internal services to the outside world.
 
 ---
 
@@ -78,17 +36,18 @@ The writing of this `README.md` and assistance in adapting and debugging the cod
 
 ## 🚀 ESPHome Minimal Configuration
 
-To use this component, you must structure your files as follows:
+To use this component you must add it as "external_components":
 
 ```
-config_esphome/
-├── config.yaml
-└── components/
-    └── nat_ap/
-        ├── __init__.py
-        ├── nat_ap.h
-        └── nat_ap.cpp
+external_components:
+  - source:
+      type: git
+      url: https://github.com/fran6120/esphome-nat-ap
+    components: nat_ap
+    refresh: always
 ```
+
+Configuration example:
 
 ```yaml
 external_components:
@@ -125,17 +84,62 @@ wifi:
   password: !secret wifi_password
 
 nat_ap:
-  ap_ssid: "ESPHomeNATAP"
-  ap_password: "ESPHomeNATAP"
-  ap_ip_address: "192.168.10.1"
-  hide_ssid: true
-  port_forwarding:
-    - protocol: TCP
-      external_port: 10001
-      internal_ip: "192.168.10.2"
-      internal_port: 10001
+  ap_ssid: "ESPHomeNATAP"            # SSID name for AP
+  ap_password: "ESPHomeNATAP"        # PASS for AP
+  ap_ip_address: "192.168.10.1"      # IP that the AP offers to clients
+  hide_ssid: true                    # true/false to enable/disable SSID broadcast function
+  port_forwarding:            
+    - protocol: TCP                  # API
+      external_port: 10001           # port on which HomeAssistant or esphome should search for the redirected device
+      internal_ip: "192.168.10.2"    # Client IP (another esphome device) to which to redirect the port
+      internal_port: 9001            # another esphome device API port
+    - protocol: TCP                  # OTA
+      external_port: 10002           # port on which esphome should search for the redirected device 
+      internal_ip: "192.168.10.2"    # Client IP (another esphome device) to which to redirect the port
+      internal_port: 9002            # another esphome device OTA port
     - protocol: UDP
       external_port: 12345
       internal_ip: "192.168.10.2"
       internal_port: 12345
 ```
+
+the other esphome device connected to esp32-c3-nat AP:
+
+```
+esphome:
+  name: esp32-c3
+  friendly_name: esp32-c3
+
+esp32:
+  board: esp32-c3-devkitm-1
+  cpu_frequency: 160MHZ
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG 
+
+api:
+  encryption:
+    key: "" 
+  port: 9001
+    
+ota:
+  - platform: esphome
+    password: ""
+    port: 9002
+
+wifi:
+  ssid: ESPHomeNATAP
+  password: ESPHomeNATAP
+  use_address: ""                     # IP that your router assigns to esp32-c3-nat
+  manual_ip: 
+    gateway: "192.168.10.1"           # esp32-c3-nat gateway (IP that the AP offers to clients)
+    static_ip: "192.168.10.2"         # IP you want to assign to this esp32 (within the esp32-c3-nat network)
+    subnet: 255.255.255.0
+  fast_connect: true
+```
+
+Tested with up to 10 ESP32s, connected in cascade, with a latency of less than a second to the last ESP32.
+
+Even OTA updates work, where the latency is even more noticeable.

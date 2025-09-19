@@ -105,7 +105,7 @@ nat_ap:
 
 the other esphome device connected to esp32-c3-nat AP:
 
-```
+```yaml
 esphome:
   name: esp32-c3
   friendly_name: esp32-c3

@@ -1,4 +1,4 @@
-# 📡 ESP32 NAT AP ESPHome component
+# 📡 ESP32 NAT AP ESPHome component (WiFi Extender)
 
 This project transforms an ESP32 device into a Wi-Fi access point (AP) capable of Network Address Translation (NAT), acting as a mini-router that can be configured directly from ESPHome. Implemented as an external component, it allows for clean, declarative integration into your YAML configurations.
 
